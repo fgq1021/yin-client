@@ -26,5 +26,8 @@
     "socket.io-client": "^4.6.1",
     "vue": "^3.2.47",
     "yin-core": "^0.0.2"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
