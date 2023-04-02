@@ -5,7 +5,6 @@ export declare class YinClient extends Yin {
         $token: string;
     };
     req: import("axios").AxiosStatic;
-    token: any;
     socket: any;
     url: string;
     localStorage: Storage;

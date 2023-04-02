@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { Yin, UserModule, SystemModule, ModelModule, ElementModule } from "yin-core";
+import { Yin, UserModule, SystemModule, ModelModule, ElementModule, yinConsole } from "yin-core";
 import { UserControllerClient } from "./user.controller.client";
 import { ModelControllerClient } from "./model.controller.client";
 import { ElementControllerClient } from "./element.controller.client";
@@ -31,8 +31,15 @@ export class YinClient extends Yin {
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.me.$token)
-                this.me = yield this.User.auth();
+            try {
+                if (this.me.$token)
+                    this.me = yield this.User.auth();
+            }
+            catch (e) {
+                yinConsole.warn('自动授权失败', e);
+                delete this.me.$token;
+                this.localStorage.removeItem(this.url);
+            }
         });
     }
 }

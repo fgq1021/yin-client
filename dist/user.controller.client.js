@@ -23,6 +23,18 @@ export class UserControllerClient extends ControllerClient {
             return me;
         });
     }
+    create(object) {
+        const _super = Object.create(null, {
+            create: { get: () => super.create }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield _super.create.call(this, object);
+            if (this.yin.me.$id)
+                return user;
+            else
+                return this.assignMe(user);
+        });
+    }
     auth() {
         return __awaiter(this, void 0, void 0, function* () {
             const me = yield this.res(this.req.get(this.authApi, this.config()));
