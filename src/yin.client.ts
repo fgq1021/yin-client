@@ -1,4 +1,4 @@
-import {Yin, UserModule, SystemModule, ModelModule, ElementModule} from "yin-core";
+import {Yin, UserModule, SystemModule, ModelModule, ElementModule, yinConsole} from "yin-core";
 import {UserControllerClient} from "./user.controller.client";
 import {ModelControllerClient} from "./model.controller.client";
 import {ElementControllerClient} from "./element.controller.client";
@@ -10,7 +10,6 @@ import * as Vue from 'vue'
 export class YinClient extends Yin {
     public me = {$id: null, $token: ''}
     public req = axios
-    public token
     public socket
     public url = location.origin + "/api/"
     public localStorage = localStorage
@@ -32,8 +31,14 @@ export class YinClient extends Yin {
     }
 
     async start() {
-        if (this.me.$token)
-            this.me = await this.User.auth()
+        try {
+            if (this.me.$token)
+                this.me = await this.User.auth()
+        } catch (e) {
+            yinConsole.warn('自动授权失败', e)
+            delete this.me.$token
+            this.localStorage.removeItem(this.url)
+        }
     }
 }
 

@@ -13,6 +13,14 @@ export class UserControllerClient extends ControllerClient {
         return me
     }
 
+    async create(object) {
+        const user = await super.create(object)
+        if (this.yin.me.$id)
+            return user
+        else
+            return this.assignMe(user)
+    }
+
     async auth() {
         const me = await this.res(this.req.get(this.authApi, this.config()));
         return this.assignMe(me)

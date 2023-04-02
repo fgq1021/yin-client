@@ -1,12 +1,14 @@
 {
   "name": "yin-core-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc -w | npm link"
+    "dev": "tsc -w",
+    "link": "npm link",
+    "link core": "npm link yin-core"
   },
   "repository": {
     "type": "git",
@@ -25,7 +27,7 @@
     "axios": "^1.3.4",
     "socket.io-client": "^4.6.1",
     "vue": "^3.2.47",
-    "yin-core": "^0.0.2"
+    "yin-core": "^0.0.3"
   },
   "files": [
     "dist"
