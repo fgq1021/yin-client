@@ -1,9 +1,6 @@
-import { Yin } from "yin-core";
+import { Yin } from "./core";
 export declare class YinClient extends Yin {
-    me: {
-        $id: any;
-        $token: string;
-    };
+    me: any;
     req: import("axios").AxiosStatic;
     socket: any;
     url: string;

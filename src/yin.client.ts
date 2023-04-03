@@ -1,4 +1,4 @@
-import {Yin, UserModule, SystemModule, ModelModule, ElementModule, yinConsole} from "yin-core";
+import {Yin, UserModule, SystemModule, ModelModule, ElementModule, yinConsole} from "./core";
 import {UserControllerClient} from "./user.controller.client";
 import {ModelControllerClient} from "./model.controller.client";
 import {ElementControllerClient} from "./element.controller.client";
@@ -8,7 +8,7 @@ import {io} from "socket.io-client";
 import * as Vue from 'vue'
 
 export class YinClient extends Yin {
-    public me = {$id: null, $token: ''}
+    public me = {$id: null, $token: ''} as any
     public req = axios
     public socket
     public url = location.origin + "/api/"
