@@ -17,5 +17,15 @@ export declare class ControllerClient {
     create(el: any): Promise<any>;
     save(el: any): Promise<any>;
     delete(id: any): Promise<any>;
+    children(place: any, limit?: number, skip?: number): Promise<any>;
     function(id: any, key: any, body: any): any;
+    eventSync(el: any, _el?: any): void;
+    watch(id: any): void;
+    objectUpdate(id: any, data?: {
+        changeId: any;
+        type: string;
+    }): void;
+    objectDelete(id: any): void;
+    afterDelete(el: any): void;
+    hotReloadRestart(): void;
 }

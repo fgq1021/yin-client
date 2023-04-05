@@ -1,4 +1,4 @@
-import {ResList} from "yin-core";
+import {ResList, Place} from "yin-core";
 
 export class ControllerClient {
     public name
@@ -85,11 +85,10 @@ export class ControllerClient {
         return this.res(this.req.delete(this.api + id, this.config()));
     }
 
-    // children(id, key, limit: number = 50, skip: number = 0, sort = 'default') {
-    //     return this.req
-    //         .get(this.api + id + "/" + key + '/children/' + sort + "?limit=" + limit + "&skip=" + skip, this.config())
-    //         .then(res => res.data);
-    // }
+    children(place, limit: number = 50, skip: number = 0) {
+        return this.res(this.req.get(this.api + 'children/' + place + "?limit=" + limit + "&skip=" + skip, this.config()))
+    }
+
     //
     // childrenWithOption(id, key, filter: object = {}, sort: object = {}, limit: number = 50, skip: number = 0) {
     //     return this.req
@@ -99,5 +98,49 @@ export class ControllerClient {
 
     function(id, key, body) {
         return this.req.post(this.api + id + '/' + key + '/function', body, this.config()).then(res => res.data);
+    }
+
+    // async childrenRefresh(place, id, type?) {
+    //     console.log('childrenRefresh', place, id, type)
+    //     const children = this.module.childrenList[place];
+    //     if (children)
+    //         switch (type) {
+    //             case undefined:
+    //                 return
+    //             case 'delete':
+    //                 return
+    //             default:
+    //                 return children.childrenRefresh(id, type)
+    //         }
+    // }
+
+
+    eventSync(el, _el?) {
+        if (_el) {
+        } else {
+            this.watch(el.$place);
+        }
+    }
+
+    watch(id) {
+        this.yin.socket.emit("watch", {id});
+    }
+
+    objectUpdate(id, data?: { changeId: any; type: string }) {
+    }
+
+    objectDelete(id) {
+    }
+
+    afterDelete(el) {
+    }
+
+    hotReloadRestart() {
+        for (let i in this.module.list) {
+            this.watch(this.name + "." + i);
+        }
+        for (let i in this.module.childrenList) {
+            this.watch(this.name + "." + i);
+        }
     }
 }

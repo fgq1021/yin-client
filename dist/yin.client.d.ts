@@ -8,6 +8,7 @@ export declare class YinClient extends Yin {
     client: boolean;
     constructor(url?: any);
     start(): Promise<void>;
+    makeSocketEvents(): void;
 }
 declare global {
     interface Window {

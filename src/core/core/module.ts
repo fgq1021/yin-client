@@ -20,6 +20,7 @@ export class Module {
 
     init() {
         yinConsole.log('装载模块:', this.name)
+        this.list = this.yin.vue.reactive({})
         this.api.init()
     }
 
@@ -40,12 +41,14 @@ export class Module {
             // if (new Date(el.$updatedAt) > new Date(element.$updatedAt)) {
             if (new Date(el.$updatedAt) > new Date(element.$updatedAt)) {
                 yinConsole.log("更新" + this.name + ":", el.$title, "#" + el.$id);
+                const oldEl = parseJson(element)
                 if (el.$model !== element.$.model) {
-                    Object.assign(this.list[id], el)
+                    // Object.assign(this.list[id], el)
+                    this.list[id].$assign(el)
                     await this.list[id].$init();
                 } else
-                    Object.assign(this.list[id], el)
-                // this.api.eventSync(el, element);
+                    this.list[id].$assign(el)
+                this.api.eventSync(this.list[id], oldEl);
             }
             // else {
             //   console.log("更新未成功" + this.name + ":", el.title || el.username, "#" + el.$id);
@@ -55,7 +58,7 @@ export class Module {
             yinConsole.log("获取" + this.name + ":", el.$title, "#" + el.$id);
             this.list[id] = this.yin.vue.reactive(new this.Object(el));
             await this.list[id].$init()
-            // this.api.eventSync(this.list[id]);
+            this.api.eventSync(this.list[id]);
         }
         return this.list[id];
     }
@@ -72,11 +75,14 @@ export class Module {
         return this.yin.client ? (u || this.yin.me) : u
     }
 
+    refresh(id) {
+        return this.list[id].$refresh()
+    }
+
     async get(id: string, user?): Promise<any> {
         user = this.u(user)
         if (id) {
             const el = await this.getWaiter(id);
-            // console.log(el)
             if (await el.$readable(user)) return el;
             return Promise.reject(yinStatus.UNAUTHORIZED((user ? user.username + "#" + user.$id : "匿名用户") + "没有查看id为 #" + id + " " + this.name + "的权限"));
         }
@@ -116,8 +122,6 @@ export class Module {
             let el = await this.api.get(id);
             return this.assign(el);
         } catch (err) {
-            // console.error(err);
-            // delete this.list[id];
             this.list[id].$isDeleted = true
             return Promise.reject(err);
         }
@@ -144,6 +148,16 @@ export class Module {
         } else return Promise.reject(yinStatus.NOT_ACCEPTABLE('没有正确的Place'));
     }
 
+    async childrenUpdate(place, id, type) {
+        const children = this.childrenList[place];
+        if (children)
+            switch (type) {
+                case 'push':
+                    return children.childrenPushed(id)
+                default:
+                    return children.childrenRefresh(id, type)
+            }
+    }
 
     // 创建时此选项会添加父元素的children
     // el.pushParents = ['id.key',['id,key']]
@@ -173,15 +187,26 @@ export class Module {
         return Promise.reject(yinStatus.UNAUTHORIZED("您没有修改" + this.name + " #" + object.$id || object._id + " 的权限"));
     }
 
-    async delete(el, user?) {
-        const id = el.$id || el;
-        // if (el.beforeDelete)
-        //   el.beforeDelete();
-        await this.api.delete(id, user);
-        // if (el.deleted)
-        //   el.deleted();
-        this.afterDelete(id);
-        return Promise.resolve({message: this.name + " #" + el.$id + " 已删除"});
+    async delete(o, user) {
+        const id = o.$id || o;
+        const object = await this.get(id, user)
+        if (await object.$manageable(user)) {
+            object.beforeDelete();
+            await this.api.delete(id, user);
+            object.deleted()
+            this.afterDelete(id);
+            return Promise.resolve(yinStatus.OK(this.name + " #" + id + " 已删除"));
+        }
+        return Promise.reject(yinStatus.UNAUTHORIZED('用户#' + user.$title + '没有' + this.name + ' #' + id + ' 的管理权限'))
+    }
+
+    objectUpdate(id, data?: { changeId: any; type: string }, timer?) {
+        return this.api.objectUpdate(id, data, timer)
+    }
+
+
+    objectDelete(id) {
+        return this.api.objectDelete(id)
     }
 
     // async deleteFrom(el, placeString, user?) {
@@ -199,7 +224,7 @@ export class Module {
         const el = this.list[id];
         if (el) {
             el.$isDeleted = true;
-            // this.api.deleteFromChildren(id);
+            this.api.afterDelete(el)
         }
     }
 
