@@ -22,6 +22,7 @@ export class Module {
     }
     init() {
         yinConsole.log('装载模块:', this.name);
+        this.list = this.yin.vue.reactive({});
         this.api.init();
     }
     regModel(modelId) {
@@ -43,13 +44,15 @@ export class Module {
                 // if (new Date(el.$updatedAt) > new Date(element.$updatedAt)) {
                 if (new Date(el.$updatedAt) > new Date(element.$updatedAt)) {
                     yinConsole.log("更新" + this.name + ":", el.$title, "#" + el.$id);
+                    const oldEl = parseJson(element);
                     if (el.$model !== element.$.model) {
-                        Object.assign(this.list[id], el);
+                        // Object.assign(this.list[id], el)
+                        this.list[id].$assign(el);
                         yield this.list[id].$init();
                     }
                     else
-                        Object.assign(this.list[id], el);
-                    // this.api.eventSync(el, element);
+                        this.list[id].$assign(el);
+                    this.api.eventSync(this.list[id], oldEl);
                 }
                 // else {
                 //   console.log("更新未成功" + this.name + ":", el.title || el.username, "#" + el.$id);
@@ -60,7 +63,7 @@ export class Module {
                 yinConsole.log("获取" + this.name + ":", el.$title, "#" + el.$id);
                 this.list[id] = this.yin.vue.reactive(new this.Object(el));
                 yield this.list[id].$init();
-                // this.api.eventSync(this.list[id]);
+                this.api.eventSync(this.list[id]);
             }
             return this.list[id];
         });
@@ -74,12 +77,14 @@ export class Module {
     u(u) {
         return this.yin.client ? (u || this.yin.me) : u;
     }
+    refresh(id) {
+        return this.list[id].$refresh();
+    }
     get(id, user) {
         return __awaiter(this, void 0, void 0, function* () {
             user = this.u(user);
             if (id) {
                 const el = yield this.getWaiter(id);
-                // console.log(el)
                 if (yield el.$readable(user))
                     return el;
                 return Promise.reject(yinStatus.UNAUTHORIZED((user ? user.username + "#" + user.$id : "匿名用户") + "没有查看id为 #" + id + " " + this.name + "的权限"));
@@ -127,8 +132,6 @@ export class Module {
                 return this.assign(el);
             }
             catch (err) {
-                // console.error(err);
-                // delete this.list[id];
                 this.list[id].$isDeleted = true;
                 return Promise.reject(err);
             }
@@ -158,6 +161,18 @@ export class Module {
             }
             else
                 return Promise.reject(yinStatus.NOT_ACCEPTABLE('没有正确的Place'));
+        });
+    }
+    childrenUpdate(place, id, type) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const children = this.childrenList[place];
+            if (children)
+                switch (type) {
+                    case 'push':
+                        return children.childrenPushed(id);
+                    default:
+                        return children.childrenRefresh(id, type);
+                }
         });
     }
     // 创建时此选项会添加父元素的children
@@ -190,17 +205,25 @@ export class Module {
             return Promise.reject(yinStatus.UNAUTHORIZED("您没有修改" + this.name + " #" + object.$id || object._id + " 的权限"));
         });
     }
-    delete(el, user) {
+    delete(o, user) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = el.$id || el;
-            // if (el.beforeDelete)
-            //   el.beforeDelete();
-            yield this.api.delete(id, user);
-            // if (el.deleted)
-            //   el.deleted();
-            this.afterDelete(id);
-            return Promise.resolve({ message: this.name + " #" + el.$id + " 已删除" });
+            const id = o.$id || o;
+            const object = yield this.get(id, user);
+            if (yield object.$manageable(user)) {
+                object.beforeDelete();
+                yield this.api.delete(id, user);
+                object.deleted();
+                this.afterDelete(id);
+                return Promise.resolve(yinStatus.OK(this.name + " #" + id + " 已删除"));
+            }
+            return Promise.reject(yinStatus.UNAUTHORIZED('用户#' + user.$title + '没有' + this.name + ' #' + id + ' 的管理权限'));
         });
+    }
+    objectUpdate(id, data, timer) {
+        return this.api.objectUpdate(id, data, timer);
+    }
+    objectDelete(id) {
+        return this.api.objectDelete(id);
     }
     // async deleteFrom(el, placeString, user?) {
     //     const {id, place, key} = this.parsePlaceString(placeString);
@@ -216,7 +239,7 @@ export class Module {
         const el = this.list[id];
         if (el) {
             el.$isDeleted = true;
-            // this.api.deleteFromChildren(id);
+            this.api.afterDelete(el);
         }
     }
     upload(file, id, place, key, progress, user) {

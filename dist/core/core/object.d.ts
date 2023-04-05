@@ -26,6 +26,7 @@ export declare class YinObject {
     get $api(): any;
     get $place(): Place;
     constructor(object: any, module: any);
+    $assign(object: any): void;
     $init(): Promise<void>;
     $initModel(): Promise<boolean>;
     $readable(user: any): Promise<boolean>;
@@ -48,6 +49,6 @@ export declare class YinObject {
     'beforeDelete'(user?: any): void;
     'deleted'(user?: any): void;
     'childrenSaved'(user?: any): void;
-    'childrenPushed'(user?: any): void;
+    'childrenPushed'(key: any, id: any): void;
     'childrenDeleted'(user?: any): void;
 }
