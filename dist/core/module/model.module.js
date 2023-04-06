@@ -26,7 +26,7 @@ export class ModelModule extends Module {
                 this.$name = 'Model';
             }
             get $api() {
-                return _this;
+                return _this.yin.vue.markRaw(_this);
             }
             get $model() {
                 return (user) => this.$api.get(this.$.model || this.$id, user);

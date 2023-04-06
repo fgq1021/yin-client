@@ -71,6 +71,7 @@ export class YinObject {
     }
 
     $assign(object) {
+        delete object.$eventFn
         Object.assign(this, object)
     }
 
@@ -251,12 +252,12 @@ export class YinObject {
                 })
             }
 
-        for (let c in this.$children) {
-            if (typeof this.$children[c] === 'string') {
-                st.push(new Key(c, 'Object'))
-            } else
-                st.push(new Key(c, 'Array'))
-        }
+        // for (let c in this.$children) {
+        //     if (typeof this.$children[c] === 'string') {
+        //         st.push(new Key(c, 'Object'))
+        //     } else
+        //         st.push(new Key(c, 'Array'))
+        // }
         putSchema(this.$$.schema)
         putSchema(this.$.schema)
 
@@ -312,7 +313,7 @@ export class YinObject {
             try {
                 const parentModel = await this.$model()
                 if (parentModel.$id !== this.$id) {
-                    const models = await parentModel[k.name](), model = models.$id ? models : models[0].$id
+                    const models = await parentModel[k.name](), model = models.$id ? models : models[0]
                     if (model.$id) {
                         req.$model = model.$id
                         for (let i in model.$data) {
@@ -333,6 +334,33 @@ export class YinObject {
     async $delete(user?) {
         return this.$api.delete(this, user)
     }
+
+    public $eventFn = {};
+
+    $on(event, fn) {
+        if (!this.$eventFn[event])
+            this.$eventFn[event] = [];
+        this.$eventFn[event].push(fn)
+        return this
+    }
+
+    $removeEvent(event, fn) {
+        if (this.$eventFn[event]) {
+            const i = this.$eventFn[event].indexOf(fn)
+            this.$eventFn[event].splice(i, 1)
+        }
+        return this
+    }
+
+    async $runEventFn(event, msg) {
+        const list = this.$eventFn[event];
+        if (list)
+            for (let i in list) {
+                await list[i](msg)
+            }
+        return true;
+    }
+
 
     // 生命周期默认函数
     'mounted'(user?) {

@@ -47,6 +47,7 @@ export class YinObject {
             schema: []
         };
         this.$changed = false;
+        this.$eventFn = {};
         if (module)
             Object.defineProperty(this, '$api', {
                 value: module,
@@ -68,6 +69,7 @@ export class YinObject {
         this.$assign(object);
     }
     $assign(object) {
+        delete object.$eventFn;
         Object.assign(this, object);
     }
     $init() {
@@ -242,13 +244,12 @@ export class YinObject {
                 configurable: true
             });
         };
-        for (let c in this.$children) {
-            if (typeof this.$children[c] === 'string') {
-                st.push(new Key(c, 'Object'));
-            }
-            else
-                st.push(new Key(c, 'Array'));
-        }
+        // for (let c in this.$children) {
+        //     if (typeof this.$children[c] === 'string') {
+        //         st.push(new Key(c, 'Object'))
+        //     } else
+        //         st.push(new Key(c, 'Array'))
+        // }
         putSchema(this.$$.schema);
         putSchema(this.$.schema);
         st.forEach(key => {
@@ -301,7 +302,7 @@ export class YinObject {
                 try {
                     const parentModel = yield this.$model();
                     if (parentModel.$id !== this.$id) {
-                        const models = yield parentModel[k.name](), model = models.$id ? models : models[0].$id;
+                        const models = yield parentModel[k.name](), model = models.$id ? models : models[0];
                         if (model.$id) {
                             req.$model = model.$id;
                             for (let i in model.$data) {
@@ -324,6 +325,29 @@ export class YinObject {
     $delete(user) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.$api.delete(this, user);
+        });
+    }
+    $on(event, fn) {
+        if (!this.$eventFn[event])
+            this.$eventFn[event] = [];
+        this.$eventFn[event].push(fn);
+        return this;
+    }
+    $removeEvent(event, fn) {
+        if (this.$eventFn[event]) {
+            const i = this.$eventFn[event].indexOf(fn);
+            this.$eventFn[event].splice(i, 1);
+        }
+        return this;
+    }
+    $runEventFn(event, msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const list = this.$eventFn[event];
+            if (list)
+                for (let i in list) {
+                    yield list[i](msg);
+                }
+            return true;
         });
     }
     // 生命周期默认函数

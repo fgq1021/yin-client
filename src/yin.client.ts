@@ -1,4 +1,4 @@
-import {ElementModule, ModelModule, Place, SystemModule, UserModule, Yin, yinConsole, yinStatus} from "./core";
+import {ElementModule, ModelModule, Place, SystemModule, UserModule, Yin, yinConsole} from "./core";
 import {UserControllerClient} from "./user.controller.client";
 import {ModelControllerClient} from "./model.controller.client";
 import {ElementControllerClient} from "./element.controller.client";
@@ -47,34 +47,35 @@ export class YinClient extends Yin {
     }
 
     makeSocketEvents() {
-        console.log(this.socket)
-        this.socket.on('connect', r => console.log(r))
+        // this.socket.on('connect', r => console.log(r))
         this.socket.on("disconnect", (reason) => {
-            console.log("连接已断开:", reason);
+            yinConsole.log("连接已断开:", reason);
             this.runEventFn("disconnect", "连接已断开");
-            console.log("连接重启中:正在尝试重新连接服务器");
+            yinConsole.log("连接重启中:正在尝试重新连接服务器");
         });
         this.socket.io.on("reconnect", async () => {
-            console.log("连接重启中:服务器已连接");
+            yinConsole.log("连接重启中:服务器已连接");
             try {
                 await this.User.auth();
-                console.log("连接重启中:数据更新正在恢复");
+                yinConsole.log("连接重启中:数据更新正在恢复");
                 for (let module of this.modules) {
                     module.api.hotReloadRestart();
                 }
-                console.log("连接已重启");
+                yinConsole.log("连接已重启");
                 await this.runEventFn("reconnect", "连接已重启");
             } catch (e) {
                 location.reload();
             }
         });
-        this.socket.on("update", ({id, type, changeId}) => {
+        this.socket.on("update", data => {
+            // console.log('socket update', data)
+            const {id, type, changeId} = data
             const p = new Place(id);
             if (p.key) {
-                yinConsole.log("收到[" + p.module + "]更新：", type, id);
+                // yinConsole.log("收到[" + p.module + "]更新：", type, id);
                 this[p.module].childrenUpdate(id, changeId, type);
             } else {
-                yinConsole.log("收到" + p.module + "更新：", type, id);
+                // yinConsole.log("收到" + p.module + "更新：", type, id);
                 this[p.module].refresh(p.id);
             }
         });

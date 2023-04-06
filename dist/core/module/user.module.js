@@ -42,7 +42,7 @@ export class UserModule extends Module {
                 this.$name = 'User';
             }
             get $api() {
-                return _this;
+                return _this.yin.vue.markRaw(_this);
             }
             get $owner() {
                 return (user) => this.$api.yin.User.get(this.$.owner || this.$id, user);

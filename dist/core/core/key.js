@@ -1,5 +1,5 @@
 export class Key {
-    constructor(key, type = 'String', title = '键值', note, settings) {
+    constructor(key, type = 'String', title = '键', note, settings) {
         this.title = "";
         this.name = "";
         this.keyType = "String";
